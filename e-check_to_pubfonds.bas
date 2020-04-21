@@ -6,7 +6,7 @@ Attribute Metadaten_EligibilityCheck_nach_PubFonds.VB_ProcData.VB_Invoke_Func = 
 
     Dim E_Check, PubFonds As Integer
     Dim Eingangsdatum, Checkdatum As Date
-    Dim Typ, Verlag, Corr_Author, Titel, Journal, DOI As String 'Typ ist f¸r IOP-Pr¸fung notwendig
+    Dim Typ, Verlag, Corr_Author, Titel, Journal, DOI As String 'Typ ist f√ºr IOP-Pr√ºfung notwendig
                 
 Quelleneingabe:
                 
@@ -19,7 +19,7 @@ Quelleneingabe:
 
    Windows("01 Eligibility-Check-Masterfile.xlsm").Activate
 
-   If Cells(E_Check, 2).Value = "" Then 'Check, dass nur ausgef_llte Zeile ausgew_hlt wird
+   If Cells(E_Check, 2).Value = "" Then 'Check, dass nur ausgef√ºllte Zeile ausgew√§hlt wird
        MsgBox "Quellzeile ist leer!", vbOKOnly
        GoTo Quelleneingabe
    End If
@@ -39,22 +39,22 @@ Quelleneingabe:
 
     Windows("Publikationsfonds Kontostand SAP.xlsx").Activate
     
-    Sheets("Publikationsfonds APCs").Select 'Richtiges Blatt ausw‰hlen
-    Range("A16").Select 'Beginn der eigentlichen Tabelle ausw‰hlen
+    Sheets("Publikationsfonds APCs").Select 'Richtiges Blatt ausw√§hlen
+    Range("A16").Select 'Beginn der eigentlichen Tabelle ausw√§hlen
 
-    PubFonds = Selection.End(xlDown).Row + 1 'Erste leere Zeile ausw‰hlen
+    PubFonds = Selection.End(xlDown).Row + 1 'Erste leere Zeile ausw√§hlen
     
-'   Fixe Werte einf_gen
+'   Fixe Werte einf√ºgen
 
     Cells(PubFonds, 1).Value = "Zusage"
     Cells(PubFonds, 3).Value = "APC"
     If Verlag = "de Gruyter" Then
         Cells(PubFonds, 4).Value = "ja"
-        Cells(PubFonds, 20).Value = "EUR 200"
-        Cells(PubFonds, 25).Value = "-240"
+        Cells(PubFonds, 20).Value = "EUR XXXX"
+        Cells(PubFonds, 25).Value = "-XXXX"
     ElseIf Verlag = "SAGE" Then
         Cells(PubFonds, 4).Value = "ja"
-        Cells(PubFonds, 20).Value = "GBP 200"
+        Cells(PubFonds, 20).Value = "GBP XXXX"
     ElseIf Verlag = "IOP" And Typ = "Deal" Then
         Cells(PubFonds, 4).Value = "ja"
     Else
@@ -62,7 +62,7 @@ Quelleneingabe:
     End If
     Cells(PubFonds, 7).Value = "Wien U"
 
-'   Variable Werte einf_gen
+'   Variable Werte einf√ºgen
 
     Cells(PubFonds, 5).Value = Corr_Author
     Cells(PubFonds, 8).Value = Titel
