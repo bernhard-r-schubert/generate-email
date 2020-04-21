@@ -50,6 +50,8 @@ Quelleneingabe:
     Cells(PubFonds, 3).Value = "APC"
     If Verlag = "de Gruyter" Then
         Cells(PubFonds, 4).Value = "ja"
+        Cells(PubFonds, 20).Value = "EUR 200"
+        Cells(PubFonds, 25).Value = "-240"
     ElseIf Verlag = "SAGE" Then
         Cells(PubFonds, 4).Value = "ja"
         Cells(PubFonds, 20).Value = "GBP 200"
