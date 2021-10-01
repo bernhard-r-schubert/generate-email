@@ -1,2 +1,2 @@
-# e-check-to-pubfonds
-Autopopulate pubfonds table with e-check metadata
+# generate-email
+Generate e-mails from funding masterlist using e-check data
