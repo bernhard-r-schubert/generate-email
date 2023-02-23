@@ -42,7 +42,7 @@ Sub EMail_Erzeugen()
 '4.1.3 Ablehnung wegen EU funding
 '4.1.4 Bestätigung
 
-'4.2 IOP
+'4.2 IOP/OUP
 '4.2.1 Ablehnung wegen Nichtaffiliation
 '4.2.2 Bestätigung
 
@@ -58,6 +58,7 @@ Sub EMail_Erzeugen()
 '5.2 CUP
 '5.3 Elsevier
 '5.4 IEEE
+'5.5 OUP
 
 '6 Bestätigung der Kostenübernahme an Autor*in
 
@@ -66,7 +67,11 @@ Sub EMail_Erzeugen()
 '6.1.2 Regulär
 
 '6.2 Bestätigung Verlagsabkommen
-'6.2.1 Frontiers
+'6.2.1 Frontiers, IOP, Wiley
+
+'7 Affiliation ergänzen
+
+'7.1 Springer, Wiley
 
 ''''''''''''''''''''''''''''''''
 ' 0 Definition der Variablen   '
@@ -121,12 +126,13 @@ Quelleneingabe:
                             
 
    Windows("OAO Funding Masterlist.xlsm").Activate
-      
-   If (Cells(masterlist, 3).Value = "" And type_of_charge <> "OA support") Then 'Check, dass nur ausgefüllte Zeile ausgewählt wird - Ausnahme: OA-Infrastrukturkosten
-       MsgBox "Quellzeile ist leer!", vbOKOnly
-       GoTo Zeilenauswahl
-   End If
-    
+   
+    'If (Cells(masterlist, 3).Value = "" And Cells(masterlist, 2).Value <> "OA support") Or (Cells(masterlist, 3).Value = "" And Cells(masterlist, 2).Value <> "Membership") Then 'Check, dass nur ausgefüllte Zeile ausgewählt wird - Ausnahme: OA-Infrastrukturkosten
+    '   MsgBox "Quellzeile ist leer!" & Cells(masterlist, 3).Value & Cells(masterlist, 2).Value, vbOKOnly
+    '   GoTo Zeilenauswahl
+    'Else
+    'End If
+
 
 '0.4 Variable Werte aus PubFonds
 ''''''''''''''''''''''''''''''''
@@ -165,6 +171,7 @@ Quelleneingabe:
         affiliated = True
         Else: affiliated = False
     End If
+    
     
 '''''''''''''''''''''''''''''
 ' 1 Ablehnungen an Autor*in '
@@ -276,32 +283,40 @@ Quelleneingabe:
 
 'endif siehe 1.6
 
-    If (publisher = "Frontiers" Or publisher = "ACS" Or publisher = "IOP" Or publisher = "MDPI" Or publisher = "T&F" Or publisher = "Elsevier" Or publisher = "OUP" Or publisher = "CUP" Or publisher = "Wiley" Or publisher = "Springer" Or publisher = "BMC") And (reject_reason = "FWF funded" Or reject_reason = "EU funded" Or reject_reason = "author not affiliated at relevant date") Then 'Frontiers-/ACS-/IOP-/MDPI-/T&F-/Elsevier-/OUP-Ablehungsemails
+    If (publisher = "Frontiers" Or publisher = "ACS" Or publisher = "IOP" Or publisher = "T&F" Or publisher = "Elsevier" Or publisher = "OUP" Or publisher = "CUP" Or publisher = "Wiley" Or publisher = "Springer" Or publisher = "BMC" Or publisher = "MDPI" Or (publisher = "SAGE" And open_access_deal = "gold agreement")) And (reject_reason = "FWF funded" Or reject_reason = "EU funded" Or reject_reason = "author not affiliated at relevant date") Then 'Frontiers-/ACS-/IOP-/MDPI-/T&F-/Elsevier-/OUP-Ablehungsemails
        
        RejectionHeaderGer = "Förderabsage"
        RejectionHeaderEng = "Funding declined for"
        PaymentOrApprovalGer = "Übernahme der Publikationskosten"
        PaymentOrApprovalEng = "cover the publishing charges for"
-       
+       If funder = "FWF" Then
+                FWFProjectIDGer = "Projektnummer vom Verlag nicht übermittelt" 'Für FWF-Funding ohne Projektnummer, betrifft T&F
+                FWFProjectIDEng = "project ID not provided by the publisher"
+            Else
+                FWFProjectIDGer = funder
+                FWFProjectIDEng = funder
+        End If
+              
         If reject_reason = "FWF funded" Then
             PaymentOrApprovalGer = "Bestätigung im Rahmen unseres Verlagsabkommens"
             PaymentOrApprovalEng = "approve under our publishing agreement"
-            If publisher = "BMC" Then
-                RejectionHeaderGer = "Förderabsage"
-                RejectionHeaderEng = "Funding declined for"
-                RejectionReasonGer = "Wir können Ihre Publikation nicht im Rahmen unseres Abkommens bestätigen, da gemäß der Artikelmetadaten ein FWF Funding vorliegt (" & funder & ") und seitens der Universität Wien deshalb keine Abwicklung möglich ist (siehe https://openaccess.univie.ac.at/" & LCase(publisher) & "). Bitte kontaktieren Sie zur Übernahme der Publikationskosten den FWF direkt: publikationskosten@fwf.ac.at. Ein Ansuchen auf Refundierung ist in diesem Zusammenhang nicht erforderlich, da der Artikel über ein Abkommen zwischen dem Verlag und dem FWF gefördert wird (siehe https://www.fwf.ac.at/de/forschungsfoerderung/fwf-programme/referierte-publikationen)."
-                RejectionReasonEng = "We cannot approve your publication as part of our agreement since the article metadata indicate FWF funding (" & funder & ") and the University of Vienna cannot process articles in this case (see https://openaccess.univie.ac.at/en/" & LCase(publisher) & "). Please contact the FWF directly in order to have the charges covered: publikationskosten@fwf.ac.at. A refund request is not necessary in this case since the article is covered by an agreement between the publisher and the FWF (see https://www.fwf.ac.at/en/forschungsfoerderung/fwf-programme/referierte-publikationen)."
+            'If publisher = "BMC" Then
+            '    RejectionHeaderGer = "Förderabsage"
+            '    RejectionHeaderEng = "Funding declined for"
+            '    RejectionReasonGer = "Wir können Ihre Publikation nicht im Rahmen unseres Abkommens bestätigen, da gemäß der Artikelmetadaten ein FWF Funding vorliegt (" & funder & ") und seitens der Universität Wien deshalb keine Abwicklung möglich ist (siehe https://openaccess.univie.ac.at/" & LCase(publisher) & "). Bitte kontaktieren Sie zur Übernahme der Publikationskosten den FWF direkt: publikationskosten@fwf.ac.at. Ein Ansuchen auf Refundierung ist in diesem Zusammenhang nicht erforderlich, da der Artikel über ein Abkommen zwischen dem Verlag und dem FWF gefördert wird (siehe https://www.fwf.ac.at/de/forschungsfoerderung/fwf-programme/referierte-publikationen)."
+            '    RejectionReasonEng = "We cannot approve your publication as part of our agreement since the article metadata indicate FWF funding (" & funder & ") and the University of Vienna cannot process articles in this case (see https://openaccess.univie.ac.at/en/" & LCase(publisher) & "). Please contact the FWF directly in order to have the charges covered: publikationskosten@fwf.ac.at. A refund request is not necessary in this case since the article is covered by an agreement between the publisher and the FWF (see https://www.fwf.ac.at/en/forschungsfoerderung/fwf-programme/referierte-publikationen)."
+            'Else
+            RejectionHeaderGer = "Zuweisung an den FWF"
+            RejectionHeaderEng = "Referral to the FWF of"
+            
+            If publisher = "T&F" Then
+                RejectionReasonGer = "Wir können Ihre Publikation nicht im Rahmen unseres Abkommens bestätigen, da gemäß der Artikelmetadaten ein FWF Funding vorliegt (" & FWFProjectIDGer & ") und seitens der Universität Wien deshalb keine Abwicklung möglich ist (siehe https://openaccess.univie.ac.at/taylor-francis). Wir haben deshalb veranlasst, dass " & publisher & " den Artikel dem FWF zur Bestägigung zuweist. Ein Ansuchen auf Refundierung ist in diesem Zusammenhang nicht erforderlich, da der Artikel über ein Abkommen zwischen dem Verlag und dem FWF gefördert wird (siehe https://www.fwf.ac.at/de/forschungsfoerderung/fwf-programme/referierte-publikationen)."
+                RejectionReasonEng = "We cannot approve your publication as part of our agreement since the article metadata indicate FWF funding (" & FWFProjectIDEng & ") and the University of Vienna cannot process articles in this case (see https://openaccess.univie.ac.at/en/taylor-francis). We have therefore asked " & publisher & " to forward the article to the FWF for approval. A refund request is not necessary in this case since the article is covered by an agreement between the publisher and the FWF (see https://www.fwf.ac.at/en/forschungsfoerderung/fwf-programme/referierte-publikationen)."
             Else
-                RejectionHeaderGer = "Zuweisung an den FWF"
-                RejectionHeaderEng = "Referral to the FWF of"
-                If publisher = "T&F" Then
-                    RejectionReasonGer = "Wir können Ihre Publikation nicht im Rahmen unseres Abkommens bestätigen, da gemäß der Artikelmetadaten ein FWF Funding vorliegt (" & funder & ") und seitens der Universität Wien deshalb keine Abwicklung möglich ist (siehe https://openaccess.univie.ac.at/taylor-francis). Wir haben deshalb veranlasst, dass " & publisher & " den Artikel dem FWF zur Bestägigung zuweist. Ein Ansuchen auf Refundierung ist in diesem Zusammenhang nicht erforderlich, da der Artikel über ein Abkommen zwischen dem Verlag und dem FWF gefördert wird (siehe https://www.fwf.ac.at/de/forschungsfoerderung/fwf-programme/referierte-publikationen)."
-                    RejectionReasonEng = "We cannot approve your publication as part of our agreement since the article metadata indicate FWF funding (" & funder & ") and the University of Vienna cannot process articles in this case (see https://openaccess.univie.ac.at/en/taylor-francis). We have therefore asked " & publisher & " to forward the article to the FWF for approval. A refund request is not necessary in this case since the article is covered by an agreement between the publisher and the FWF (see https://www.fwf.ac.at/en/forschungsfoerderung/fwf-programme/referierte-publikationen)."
-                Else
-                    RejectionReasonGer = "Wir können Ihre Publikation nicht im Rahmen unseres Abkommens bestätigen, da gemäß der Artikelmetadaten ein FWF Funding vorliegt (" & funder & ") und seitens der Universität Wien deshalb keine Abwicklung möglich ist (siehe https://openaccess.univie.ac.at/" & LCase(publisher) & "). Wir haben deshalb veranlasst, dass " & publisher & " den Artikel dem FWF zur Bestägigung zuweist. Ein Ansuchen auf Refundierung ist in diesem Zusammenhang nicht erforderlich, da der Artikel über ein Abkommen zwischen dem Verlag und dem FWF gefördert wird (siehe https://www.fwf.ac.at/de/forschungsfoerderung/fwf-programme/referierte-publikationen)."
-                    RejectionReasonEng = "We cannot approve your publication as part of our agreement since the article metadata indicate FWF funding (" & funder & ") and the University of Vienna cannot process articles in this case (see https://openaccess.univie.ac.at/en/" & LCase(publisher) & "). We have therefore asked " & publisher & " to forward the article to the FWF for approval. A refund request is not necessary in this case since the article is covered by an agreement between the publisher and the FWF (see https://www.fwf.ac.at/en/forschungsfoerderung/fwf-programme/referierte-publikationen)."
-                End If
+                RejectionReasonGer = "Wir können Ihre Publikation nicht im Rahmen unseres Abkommens bestätigen, da gemäß der Artikelmetadaten ein FWF Funding vorliegt (" & FWFProjectIDGer & ") und seitens der Universität Wien deshalb keine Abwicklung möglich ist (siehe https://openaccess.univie.ac.at/" & LCase(publisher) & "). Wir haben deshalb veranlasst, dass " & publisher & " den Artikel dem FWF zur Bestägigung zuweist. Ein Ansuchen auf Refundierung ist in diesem Zusammenhang nicht erforderlich, da der Artikel über ein Abkommen zwischen dem Verlag und dem FWF gefördert wird (siehe https://www.fwf.ac.at/de/forschungsfoerderung/fwf-programme/referierte-publikationen)."
+                RejectionReasonEng = "We cannot approve your publication as part of our agreement since the article metadata indicate FWF funding (" & FWFProjectIDEng & ") and the University of Vienna cannot process articles in this case (see https://openaccess.univie.ac.at/en/" & LCase(publisher) & "). We have therefore asked " & publisher & " to forward the article to the FWF for approval. A refund request is not necessary in this case since the article is covered by an agreement between the publisher and the FWF (see https://www.fwf.ac.at/en/forschungsfoerderung/fwf-programme/referierte-publikationen)."
             End If
+            'End If
             
 ' 1.5 EU-Ablehnungen
 ''''''''''''''''''''
@@ -320,7 +335,7 @@ Quelleneingabe:
         ElseIf affiliated = False Then
             PaymentOrApprovalGer = "Bestätigung im Rahmen unseres Verlagsabkommens"
             PaymentOrApprovalEng = "approve under our publishing agreement"
-            If (publisher = "ACS" Or publisher = "IOP" Or publisher = "T&F" Or publisher = "OUP" Or publisher = "Wiley" Or publisher = "Springer") Then 'Relevanter Zeitpunkt ist acceptance
+            If (publisher = "ACS" Or publisher = "IOP" Or publisher = "T&F" Or publisher = "OUP" Or publisher = "Wiley" Or publisher = "Springer" Or (publisher = "SAGE" And open_access_deal = "gold agreement")) Then 'Relevanter Zeitpunkt ist acceptance
                 If publisher = "T&F" Then
                     'RejectionReasonGer = "Leider können wir Ihre Publikation nicht fördern, da Sie zum Zeitpunkt der Acceptance nicht Angehörige*r der Universität Wien waren und seitens der Universität deshalb keine Förderung möglich ist (siehe https://openaccess.univie.ac.at/taylor-francis)."
                     'RejectionReasonEng = "Unfortunately we cannot cover the charges since you were not affiliated with the University of Vienna at the date of acceptance and the University cannot provide funding in this case (see https://openaccess.univie.ac.at/en/taylor-francis)."
@@ -383,9 +398,12 @@ Quelleneingabe:
                 GoTo Ende
             End If
             
-            If (publisher = "SAGE") Or (publisher = "de Gruyter") Then 'Ergänzung zur reduzierten Gebühren für SAGE/de Gruyter
+            If publisher = "de Gruyter" Then 'Ergänzung zur reduzierten Gebühren für SAGE/de Gruyter
                 PriceReductionGer = " (aufgrund des Verlagsabkommens mit stark reduzierten Publikationsgebühren)"
                 PriceReductionEng = " (priced at a greatly reduced rate as part of our publishing agreement)"
+            ElseIf publisher = "SAGE" Then 'Ergänzung zur reduzierten Gebühren für SAGE/de Gruyter
+                PriceReductionGer = " (aufgrund des Verlagsabkommens mit reduzierten Publikationsgebühren)"
+                PriceReductionEng = " (priced at a reduced rate as part of our publishing agreement)"
             Else
                 PriceReductionGer = ""
                 PriceReductionEng = ""
@@ -410,23 +428,28 @@ Quelleneingabe:
                 "Vielen Dank und beste Grüße," & vbCrLf & _
                 "Guido Blechl / Bernhard Schubert / Klara Schellander"
                 
-                UFind corresponding_author 'Suche nach corresponding_author in u:find
+                If corresponding_author <> "" Then 'Falls es sich um Membership oder OA Support handelt gibt es keine Bestätigung an corresponding authors
+                
+                
+                    UFind corresponding_author 'Suche nach corresponding_author in u:find
                 
                 'Zahlungsbestätigung, sofort zu zahlen, deutsch
                 
-                EMailGenerate "Rechnung in Zahlung (" & title & ")" & vbCrLf & vbCrLf & _
-                "S.g. NNNN NNNNNN," & vbCrLf & vbCrLf & _
-                "die Rechnung für den Artikel """ & title & """ in der Zeitschrift """ & source_full_title & """ wurde in den Rechnungslauf der Universität Wien eingebracht. Der Betrag sollte innerhalb der nächsten 5-10 Tage am Konto des Empfängers eingelangt sein. Die Bezahlung erfolgt aus Mitteln des zentralen Open-Access-Publikationsfonds" & PriceReductionGer & ". Von Ihrer Seite ist nichts weiter zu tun." & vbCrLf & vbCrLf & _
-                "Mit freundlichen Grüßen," & vbCrLf & vbCrLf & _
-                "Guido Blechl / Bernhard Schubert / Klara Schellander"
+                    EMailGenerate "Rechnung in Zahlung (" & title & ")" & vbCrLf & vbCrLf & _
+                    "S.g. NNNN NNNNNN," & vbCrLf & vbCrLf & _
+                    "die Rechnung für den Artikel """ & title & """ in der Zeitschrift """ & source_full_title & """ wurde in den Rechnungslauf der Universität Wien eingebracht. Der Betrag sollte innerhalb der nächsten 5-10 Tage am Konto des Empfängers eingelangt sein. Die Bezahlung erfolgt aus Mitteln des zentralen Open-Access-Publikationsfonds" & PriceReductionGer & ". Von Ihrer Seite ist nichts weiter zu tun." & vbCrLf & vbCrLf & _
+                    "Mit freundlichen Grüßen," & vbCrLf & vbCrLf & _
+                    "Guido Blechl / Bernhard Schubert / Klara Schellander"
                 
                 'Zahlungsbestätigung, sofort zu zahlen, englisch
                 
-                EMailGenerate "Invoice Payment (" & title & ")" & vbCrLf & vbCrLf & _
-                "Dear NNNN NNNNNN," & vbCrLf & vbCrLf & _
-                "the invoice for the article """ & title & """ in """ & source_full_title & """ has been forwarded to the university's accounting office and will be authorised for payment within the next 5-10 days. Payment is provided by the central Open Access publishing fund" & PriceReductionEng & ". No further action is required on your part." & vbCrLf & vbCrLf & _
-                "Kind regards," & vbCrLf & vbCrLf & _
-                "Guido Blechl / Bernhard Schubert / Klara Schellander"
+                    EMailGenerate "Invoice Payment (" & title & ")" & vbCrLf & vbCrLf & _
+                    "Dear NNNN NNNNNN," & vbCrLf & vbCrLf & _
+                    "the invoice for the article """ & title & """ in """ & source_full_title & """ has been forwarded to the university's accounting office and will be authorised for payment within the next 5-10 days. Payment is provided by the central Open Access publishing fund" & PriceReductionEng & ". No further action is required on your part." & vbCrLf & vbCrLf & _
+                    "Kind regards," & vbCrLf & vbCrLf & _
+                    "Guido Blechl / Bernhard Schubert / Klara Schellander"
+                
+                End If
                             
 ' 2.2 Nicht sofort zu zahlen
 ''''''''''''''''''''''''''''
@@ -445,21 +468,25 @@ Quelleneingabe:
                 
                 'Zahlungsbestätigung, nicht sofort zu zahlen, deutsch
                 
-                UFind corresponding_author 'Suche nach corresponding_author in u:find
+                If corresponding_author <> "" Then 'Falls es sich um Membership oder OA Support handelt gibt es keine Bestätigung an corresponding authors
                 
-                EMailGenerate "Rechnung in Zahlung (" & title & ")" & vbCrLf & vbCrLf & _
-                "S.g. NNNN NNNNNN," & vbCrLf & vbCrLf & _
-                "die Rechnung für den Artikel """ & title & """ in der Zeitschrift """ & source_full_title & """ wurde in den Rechnungslauf der Universität Wien eingebracht und wird mit dem auf der Rechnung angeführten Zahlungsziel (" & due_date & ") angewiesen. Die Bezahlung erfolgt aus Mitteln des zentralen Open-Access-Publikationsfonds" & PriceReductionGer & ". Von Ihrer Seite ist nichts weiter zu tun." & vbCrLf & vbCrLf & _
-                "Mit freundlichen Grüßen," & vbCrLf & vbCrLf & _
-                "Guido Blechl / Bernhard Schubert / Klara Schellander"
+                    UFind corresponding_author 'Suche nach corresponding_author in u:find
+                
+                    EMailGenerate "Rechnung in Zahlung (" & title & ")" & vbCrLf & vbCrLf & _
+                    "S.g. NNNN NNNNNN," & vbCrLf & vbCrLf & _
+                    "die Rechnung für den Artikel """ & title & """ in der Zeitschrift """ & source_full_title & """ wurde in den Rechnungslauf der Universität Wien eingebracht und wird mit dem auf der Rechnung angeführten Zahlungsziel (" & due_date & ") angewiesen. Die Bezahlung erfolgt aus Mitteln des zentralen Open-Access-Publikationsfonds" & PriceReductionGer & ". Von Ihrer Seite ist nichts weiter zu tun." & vbCrLf & vbCrLf & _
+                    "Mit freundlichen Grüßen," & vbCrLf & vbCrLf & _
+                    "Guido Blechl / Bernhard Schubert / Klara Schellander"
                 
                 'Zahlungsbestätigung, nicht sofort zu zahlen, englisch
                 
-                EMailGenerate "Invoice Payment (" & title & ")" & vbCrLf & vbCrLf & _
-                "Dear NNNN NNNNNN," & vbCrLf & vbCrLf & _
-                "the invoice for the article """ & title & """ in """ & source_full_title & """ has been forwarded to the university's accounting office and will be authorised for payment on the due date specified (" & due_date & "). Payment is provided by the central Open Access publishing fund" & PriceReductionEng & ". No further action is required on your part." & vbCrLf & vbCrLf & _
-                "Kind regards," & vbCrLf & vbCrLf & _
-                "Guido Blechl / Bernhard Schubert / Klara Schellander"
+                    EMailGenerate "Invoice Payment (" & title & ")" & vbCrLf & vbCrLf & _
+                    "Dear NNNN NNNNNN," & vbCrLf & vbCrLf & _
+                    "the invoice for the article """ & title & """ in """ & source_full_title & """ has been forwarded to the university's accounting office and will be authorised for payment on the due date specified (" & due_date & "). Payment is provided by the central Open Access publishing fund" & PriceReductionEng & ". No further action is required on your part." & vbCrLf & vbCrLf & _
+                    "Kind regards," & vbCrLf & vbCrLf & _
+                    "Guido Blechl / Bernhard Schubert / Klara Schellander"
+                
+                End If
                 
             End If
         
@@ -506,6 +533,8 @@ Quelleneingabe:
     If (publisher = "Wiley" Or publisher = "Elsevier" Or publisher = "Frontiers" Or publisher = "IOP" Or publisher = "SAGE" Or publisher = "BMC") And reject_reason = "FWF funded" Then 'Wiley/Elsevier/Frontiers/IOP/SAGE/BMC Artikel an FWF
     
         FWFDashboardAccount = "dashboard for the eligibility check"
+        KEMOEOderUnivie = "Austrian "
+        BMCForwarding = ""
     
         If publisher = "Elsevier" Then 'Variable für E-Mail-Adresse von Elsevier, bei Wiley kann auf das Benachrichtigungs-E-Mail geantwortet werden
             PublisherContact = "agreementactivation@elsevier.com"
@@ -513,33 +542,35 @@ Quelleneingabe:
             PublisherContact = "institutions@frontiersin.org"
             doi = article_id 'Kein DOI bei Frontiers-Artikeln vorhanden
         ElseIf publisher = "Wiley" Then
-            PublisherContact = ""
+            PublisherContact = "support@oable.org"
         ElseIf publisher = "IOP" Then
             PublisherContact = ""
             doi = article_id 'Kein DOI bei IOP-Artikeln vorhanden
         ElseIf publisher = "SAGE" Then
             PublisherContact = ""
         ElseIf publisher = "BMC" Then
-            PublisherContact = ""
-            doi = article_id 'Kein DOI bei BMC-Artikeln vorhanden
-            FWFDashboardAccount = "account"
+            PublisherContact = "oa.verification@springernature.com"
+            KEMOEOderUnivie = "Uni Vienna "
+            BMCForwarding = "We have already rejected this article in our dashboard. Ideally we would be able to manually forward the article to the FWF dashboard ourselves - functionality that already exists for SpringerCompact articles. We hope this can be implemented for BMC articles as well. "
+            'doi = article_id 'Kein DOI bei BMC-Artikeln vorhanden
+            'FWFDashboardAccount = "account"
         End If
             
-        If publisher = "BMC" Then
-            EMailGenerate "Dear " & publisher & " Support," & vbCrLf & vbCrLf & _
-            "Thank you for checking. Please remove the Manuscript ID " & doi & " (see below) from our account. Reason: FWF funded (" & funder & "; see our funding requirements: https://openaccess.univie.ac.at/en/bmc/). Author can apply for funding at FWF: publikationskosten@fwf.ac.at" & vbCrLf & vbCrLf & _
-            "If you or the author have any further questions, please do not hesitate to contact us." & vbCrLf & vbCrLf & _
-            "Kind regards" & vbCrLf & vbCrLf & _
-            "Guido Blechl / Bernhard Schubert / Klara Schellander"
-        Else
+        'If publisher = "BMC" Then
+        '    EMailGenerate "Dear " & publisher & " Support," & vbCrLf & vbCrLf & _
+        '    "Thank you for checking. Please remove the Manuscript ID " & doi & " (see below) from our account. Reason: FWF funded (" & funder & "; see our funding requirements: https://openaccess.univie.ac.at/en/bmc/). Author can apply for funding at FWF: publikationskosten@fwf.ac.at" & vbCrLf & vbCrLf & _
+        '    "If you or the author have any further questions, please do not hesitate to contact us." & vbCrLf & vbCrLf & _
+        '    "Kind regards" & vbCrLf & vbCrLf & _
+        '    "Guido Blechl / Bernhard Schubert / Klara Schellander"
+        'Else
             EMailGenerate PublisherContact & vbCrLf & "publikationskosten@fwf.ac.at" & vbCrLf & vbCrLf & _
-            "Austrian OA Agreement: Please assign " & doi & " to FWF dashboard" & vbCrLf & vbCrLf & _
+            KEMOEOderUnivie & publisher & " OA Agreement: Please assign " & doi & " to FWF dashboard" & vbCrLf & vbCrLf & _
             "Dear " & publisher & " Support," & vbCrLf & vbCrLf & _
             "We cannot approve the article " & doi & " (" & title & ") due to FWF funding (" & funder & ")." & vbCrLf & vbCrLf & _
-            "Could you please reassign the article to the FWF " & FWFDashboardAccount & ". Please confirm." & vbCrLf & vbCrLf & _
+            BMCForwarding & "Could you please reassign the article to the FWF " & FWFDashboardAccount & ". Please confirm." & vbCrLf & vbCrLf & _
             "Kind regards," & vbCrLf & vbCrLf & _
             "Guido Blechl / Bernhard Schubert / Klara Schellander"
-        End If
+        'End If
         
     End If
 
@@ -549,6 +580,7 @@ Quelleneingabe:
     If publisher = "MDPI" And reject_reason = "FWF funded" Then 'MDPI Artikel an FWF
     
         EMailGenerate "publikationskosten@fwf.ac.at" & vbCrLf & vbCrLf & _
+        "Autor*innen CC" & vbCrLf & vbCrLf & _
         "Dear MDPI Support and NNNNNNNNNNNNNN-Author-NNNNNNNNNNNNNNNN," & vbCrLf & vbCrLf & _
         "We cannot approve the manuscript """ & article_id & """ (" & title & ") due to FWF funding (Austrian Science Fund " & funder & ")." & vbCrLf & vbCrLf & _
         "@MDPI: Could you please reassign the article to the FWF dashboard for the eligibility check. Please confirm." & vbCrLf & vbCrLf & _
@@ -571,8 +603,9 @@ Quelleneingabe:
     
     If publisher = "BMC" Then
         If echeck_status = "pending" Then 'BMC funding Nachfrage
-            EMailGenerate "Dear BMC Team," & vbCrLf & vbCrLf & _
-            "Please provide us with funding information from the article metadata and the acknowledgements section from the article manuscript. As per our funding criteria we can only cover charges for articles that have not resulted from external funding." & vbCrLf & vbCrLf & _
+            EMailGenerate "Uni Vienna BMC agreement: Funding info for " & doi & vbCrLf & vbCrLf & _
+            "Dear team," & vbCrLf & vbCrLf & _
+            "Please provide us with funding information from the article metadata and the acknowledgements section from the article manuscript for " & doi & ". As per our funding criteria we can only cover charges for articles that have not resulted from external funding." & vbCrLf & vbCrLf & _
             "Kind regards," & vbCrLf & vbCrLf & _
             "Guido Blechl / Bernhard Schubert / Klara Schellander"
 
@@ -613,15 +646,15 @@ Quelleneingabe:
         End If
     End If
         
-' 4.2 IOP
-'''''''''
+' 4.2 IOP/OUP
+'''''''''''''
             
 ' 4.2.1 Ablehnung wegen Nichtaffiliation
 ''''''''''''''''''''''''''''''''''''''''
 
 'endif siehe 4.2.2
             
-    If publisher = "IOP" And open_access_deal = "transformative agreement" Then 'IOP Hybrid approve und reject
+    If publisher = "IOP" Or publisher = "OUP" Then 'IOP/OUP Gold/Hybrid approve und reject
             
         If affiliated = False Then 'Reject weil nicht affiliated
             EMailGenerate "Dear NNNNNNNN," & vbCrLf & vbCrLf & _
@@ -635,7 +668,7 @@ Quelleneingabe:
 
 'nested if, siehe 4.2.1
         
-        ElseIf echeck_status = "approved" And invoice_status = "Zusage" Then 'Bestätigung
+        ElseIf echeck_status = "approved" Then 'Bestätigung
             EMailGenerate "Dear NNNNNNNN," & vbCrLf & vbCrLf & _
             "the article """ & title & """ qualifies for inclusion in our Open Access agreement." & vbCrLf & vbCrLf & _
             "Kind regards" & vbCrLf & vbCrLf & _
@@ -884,6 +917,51 @@ Quelleneingabe:
     
     End If
 
+' 5.5 OUP
+'''''''''
+
+    If (publisher = "OUP") And echeck_status = "pending" Then 'CUP Nachfrage
+                   
+        UFind corresponding_author 'Suche nach corresponding_author in u:find
+        
+        'Deutsch
+        
+        url = "https://openaccess.univie.ac.at/" & LCase(Application.WorksheetFunction.Trim(publisher))
+        url = Replace(url, " ", "")
+        
+        EMailGenerate "Open Access für Ihren " & publisher & "-Artikel """ & title & """" & vbCrLf & vbCrLf & _
+        "S.g. NNN," & vbCrLf & vbCrLf & _
+        "wir wurden von " & publisher & " darüber informiert, dass folgende Publikation über das Open-Access-Verlagsabkommen der Universität Wien gefördert werden könnte:" & vbCrLf & vbCrLf & _
+        "> Manuscript Details" & vbCrLf & _
+        "> " & doi & vbCrLf & _
+        "> " & source_full_title & vbCrLf & _
+        "> " & title & vbCrLf & vbCrLf & _
+        "Wir würden uns freuen, wenn Sie dieses Angebot wahrnehmen würden. Es entstehen Ihnen keine Kosten. Falls Sie sich für Open Access entscheiden, schreiben Sie bitte an NNNNNNNNNNNNNNNN. Als Open-Access-Lizenz empfehlen wir CC BY (siehe https://creativecommons.org/licenses/by/4.0/ bzw. auch https://openaccess.univie.ac.at/creativecommons/), welche eine bestmögliche Verbreitung Ihres Artikels ermöglicht. Bitte beachten Sie auch, dass einige Fördergeber - wie z.B. der FWF - diese Lizenz verpflichtend vorsehen." & vbCrLf & vbCrLf & _
+        "Unsere Informationen zum Förderabkommen finden Sie unter " & url & "." & vbCrLf & vbCrLf & _
+        "Sollten Sie noch Fragen haben, melden Sie sich bitte." & vbCrLf & vbCrLf & _
+        "Mit freundlichen Grüßen," & vbCrLf & vbCrLf & _
+        "Guido Blechl / Bernhard Schubert / Klara Schellander"
+        
+        'Englisch
+                                
+        url = "https://openaccess.univie.ac.at/en/" & LCase(Application.WorksheetFunction.Trim(publisher))
+        url = Replace(url, " ", "")
+                                
+        EMailGenerate "Open Access for your " & publisher & " article """ & title & """" & vbCrLf & vbCrLf & _
+        "Dear NNN," & vbCrLf & vbCrLf & _
+        "we were informed by " & publisher & " that the publication below is eligible for Open Access funding as part of a publishing agreement with the University of Vienna:" & vbCrLf & vbCrLf & _
+        "> Manuscript Details" & vbCrLf & _
+        "> " & doi & vbCrLf & _
+        "> " & source_full_title & vbCrLf & _
+        "> " & title & vbCrLf & vbCrLf & _
+        "We would be delighted if you would accept this offer. You will not incur any costs since any Open Access charges are already included in our contract sum. If you opt for Open Access please write to NNNNNNNNNNNNNNNNNNNN. We recommend the CC BY license (see https://creativecommons.org/licenses/by/4.0/ and https://openaccess.univie.ac.at/en/creativecommons/, respectively), which ensures that your article can be disseminated as widely and as easily as possible. Please note that some funders (such as the FWF) mandate the CC BY license." & vbCrLf & vbCrLf & _
+        "You can find additional information on the agreement under " & url & "." & vbCrLf & vbCrLf & _
+        "Please do not hesitate to ask if you have any questions." & vbCrLf & vbCrLf & _
+        "Kind regards," & vbCrLf & vbCrLf & _
+        "Guido Blechl / Bernhard Schubert / Klara Schellander"
+    
+    End If
+
 '''''''''''''''''''''''''''''''''''''''''''''''''
 ' 6 Bestätigung der Kostenübernahme an Autor*in '
 '''''''''''''''''''''''''''''''''''''''''''''''''
@@ -955,40 +1033,115 @@ Quelleneingabe:
         
 ' 6.2 Bestätigung Verlagsabkommen
 '''''''''''''''''''''''''''''''''
+
+' 6.2.1 Frontiers, IOP, Wiley
+'''''''''''''''''''''''''''''
         
-        If invoice_status = "Zusage" And publisher = "Frontiers" Then 'Frontiers-Autor*inneninfo
+        If (invoice_status = "Zusage" And publisher = "Frontiers") Or (echeck_status = "approved" And (publisher = "Wiley" Or publisher = "IOP")) Then 'Frontiers/IOP/Wiley-Autor*inneninfo
         
             UFind corresponding_author 'Suche nach corresponding_author in u:find
+            
+            Dim confirmationAgreementGer, confirmationAgreementEng, FWFLicenceChoiceGer, FWFLicenceChoiceEng As String
+            
+            If publisher = "Frontiers" Then
+                confirmationAgreementGer = "Wir haben die Übernahme der Open-Access-Publikationsgebühren im Rahmen unseres Abkommens gegenüber dem Verlag bereits bestätigt, sodass die Rechnung nach Acceptance zentral über das Open Access Office bezahlt wird, ohne dass Sie hier tätig werden müssen. Sollte der Artikel das Resultat von FWF- oder EU-Förderung sein, teilen Sie uns das bitte mit. Im Falle von FWF-Förderung würden wir die Zuweisung des Artikels zum Abkommen des FWF veranlassen. Im Falle von EU-Förderung müssten die Kosten über das Projekt abgerechnet werden. Siehe https://openaccess.univie.ac.at/frontiers/."
+                confirmationAgreementEng = "We have already informed the publisher that we will cover the charges under our agreement, which means that after acceptance the invoice will be paid centrally by the Open Access Office without any need for you to become involved. In case the article has resulted from FWF or EU funding please let us know. If the article was funded by the FWF we will have it assigned to the FWF agreement. If the article was funded by the EU the charges have to be paid using project funds. See https://openaccess.univie.ac.at/en/frontiers/."
+            ElseIf (publisher = "Wiley" Or publisher = "IOP") Then
+                confirmationAgreementGer = "Wir haben die Open-Access-Förderung im Rahmen unseres Verlagsabkommens mit " & publisher & " (https://openaccess.univie.ac.at/" & LCase(publisher) & ") soeben bestätigt."
+                confirmationAgreementEng = "We have just approved Open Access for the article as part of our transformative agreement with " & publisher & " (https://openaccess.univie.ac.at/en/" & LCase(publisher) & ")."
+            End If
+            
+            If publisher = "IOP" And (InStr(funder, "FWF") <> 0) Then
+                FWFLicenceChoiceGer = "Bitten wählen Sie eine *CC BY-Lizenz*, um die FWF-Förderbedingungen zu erfüllen (für das FWF-Projekt " & funder & ")."
+                FWFLicenceChoiceEng = "Please choose a *CC BY licence* to comply with FWF funding requirements (for the FWF project " & funder & ")."
+            Else
+                FWFLicenceChoiceGer = ""
+                FWFLicenceChoiceGer = ""
+            End If
         
             'Deutsch
             
-            EMailGenerate "Open-Access-Förderung für Ihren Frontiers-Artikel """ & title & """" & vbCrLf & vbCrLf & _
+            EMailGenerate "Open-Access-Förderung für Ihren " & publisher & "-Artikel """ & title & """" & vbCrLf & vbCrLf & _
             "S.g. NNNN," & vbCrLf & vbCrLf & _
-            "wir wurden von Frontiers über folgende Einreichung informiert:" & vbCrLf & vbCrLf & _
+            "wir wurden von " & publisher & " über folgende Einreichung informiert:" & vbCrLf & vbCrLf & _
             "> Manuscript Details" & vbCrLf & _
             "> Title: " & title & vbCrLf & _
             "> Journal: " & source_full_title & vbCrLf & _
             "> Corresponding author: " & corresponding_author & vbCrLf & vbCrLf & _
-            "Wir haben die Übernahme der Open-Access-Publikationsgebühren im Rahmen unseres Abkommens gegenüber dem Verlag bereits bestätigt (Details siehe https://openaccess.univie.ac.at/frontiers/), sodass die Rechnung nach Acceptance zentral über das Open Access Office bezahlt wird, ohne dass Sie hier tätig werden müssen." & vbCrLf & vbCrLf & _
+            confirmationAgreementGer & vbCrLf & vbCrLf & _
+            FWFLicenceChoiceGer & vbCrLf & vbCrLf & _
+            "Sollten Sie noch Fragen haben, melden Sie sich bitte." & vbCrLf & vbCrLf & _
+            "Mit freundlichen Grüßen," & vbCrLf & vbCrLf & _
+            "Guido Blechl / Bernhard Schubert / Klara Schellander"
+            
+             '"Wir haben die Übernahme der Open-Access-Publikationsgebühren im Rahmen unseres Abkommens gegenüber dem Verlag bereits bestätigt (Details siehe https://openaccess.univie.ac.at/frontiers/), sodass die Rechnung nach Acceptance zentral über das Open Access Office bezahlt wird, ohne dass Sie hier tätig werden müssen."
+            
+            'Englisch
+            
+            EMailGenerate "Open Access for your " & publisher & " article """ & title & """" & vbCrLf & vbCrLf & _
+            "Dear NNNN," & vbCrLf & vbCrLf & _
+            "we were notified of the submission below by " & publisher & ":" & vbCrLf & vbCrLf & _
+            "> Manuscript Details" & vbCrLf & _
+            "> Title: " & title & vbCrLf & _
+            "> Journal: " & source_full_title & vbCrLf & _
+            "> Corresponding author: " & corresponding_author & vbCrLf & vbCrLf & _
+            confirmationAgreementEng & vbCrLf & vbCrLf & _
+            FWFLicenceChoiceEng & vbCrLf & vbCrLf & _
+            "Please do not hesitate to ask if you have any questions." & vbCrLf & vbCrLf & _
+            "Kind regards," & vbCrLf & vbCrLf & _
+            "Guido Blechl / Bernhard Schubert / Klara Schellander"
+            
+            '"We have already informed the publisher that we will cover the charges under our agreement (see https://openaccess.univie.ac.at/en/frontiers/), which means that after acceptance the invoice will be paid centrally by the Open Access Office without any need for you to become involved."
+        
+        End If
+
+''''''''''''''''''''''''''
+' 7 Affiliation ergänzen '
+''''''''''''''''''''''''''
+
+' 7.1 Springer, Wiley
+'''''''''''''''''''''
+
+        If (echeck_status = "pending" And (publisher = "Wiley" Or publisher = "Springer")) Then 'Springer/Wiley-Affiliation ergänzen
+        
+            UFind corresponding_author 'Suche nach corresponding_author in u:find
+            
+            Dim addAffiliationGer, addAffiliationEng As String
+            
+            addAffiliationGer = "Der Artikel qualifiziert sich für die Open Access im Rahmen unseres Verlagsabkommens. Gemäß den Metadaten, die uns vom Verlag übermittelt wurden, haben Sie die Universität Wien aktuell nicht als Affiliation für diesen Artikel angeführt. Bitte stellen Sie sicher, dass die Universität Wien als (zumindest eine) Ihre(r) Affiliation(en) gemäß unserer Förderrichtlinien (siehe https://openaccess.univie.ac.at/" & LCase(publisher) & "/) im veröffentlichten Artikel angeführt ist und bestätigen Sie uns dies via E-Mail. Ansonsten müssen wir Open Access für diesen Artikel leider aus formalen Gründen ablehnen."
+            addAffiliationEng = "The article qualifies for Open Access under our publishing agreement. According to the metadata provided by the publisher you have not currently listed the University of Vienna as affiliation for this article. Please make sure that the University of Vienna is listed as (one of) your affiliation(s) as per our funding requirements (see https://openaccess.univie.ac.at/" & LCase(publisher) & "/) in the published article and confirm this via e-mail. Otherwise we will have to decline Open Access for this article for formal reasons."
+        
+            'Deutsch
+            
+            EMailGenerate "Open-Access-Förderung für Ihren " & publisher & "-Artikel """ & title & """" & vbCrLf & vbCrLf & _
+            "S.g. NNNN," & vbCrLf & vbCrLf & _
+            "wir wurden von " & publisher & " über folgende Einreichung informiert:" & vbCrLf & vbCrLf & _
+            "> Manuscript Details" & vbCrLf & _
+            "> Title: " & title & vbCrLf & _
+            "> Journal: " & source_full_title & vbCrLf & _
+            "> Corresponding author: " & corresponding_author & vbCrLf & vbCrLf & _
+            addAffiliationGer & vbCrLf & vbCrLf & _
             "Sollten Sie noch Fragen haben, melden Sie sich bitte." & vbCrLf & vbCrLf & _
             "Mit freundlichen Grüßen," & vbCrLf & vbCrLf & _
             "Guido Blechl / Bernhard Schubert / Klara Schellander"
             
             'Englisch
             
-            EMailGenerate "Open Access for your Frontiers article """ & title & """" & vbCrLf & vbCrLf & _
+            EMailGenerate "Open Access for your " & publisher & " article """ & title & """" & vbCrLf & vbCrLf & _
             "Dear NNNN," & vbCrLf & vbCrLf & _
-            "we were notified of the submission below by Frontiers:" & vbCrLf & vbCrLf & _
+            "we were notified of the submission below by " & publisher & ":" & vbCrLf & vbCrLf & _
             "> Manuscript Details" & vbCrLf & _
             "> Title: " & title & vbCrLf & _
             "> Journal: " & source_full_title & vbCrLf & _
             "> Corresponding author: " & corresponding_author & vbCrLf & vbCrLf & _
-            "We have already informed the publisher that we will cover the charges under our agreement (see https://openaccess.univie.ac.at/en/frontiers/), which means that after acceptance the invoice will be paid centrally by the Open Access Office without any need for you to become involved." & vbCrLf & vbCrLf & _
+            addAffiliationEng & vbCrLf & vbCrLf & _
             "Please do not hesitate to ask if you have any questions." & vbCrLf & vbCrLf & _
             "Kind regards," & vbCrLf & vbCrLf & _
             "Guido Blechl / Bernhard Schubert / Klara Schellander"
         
         End If
+
+
 
 Ende:
 
