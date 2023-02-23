@@ -1,0 +1,6 @@
+Sub UFind(name As String)
+    Const query As String = "https://ufind.univie.ac.at/de/search.html?filter=staff&query="
+    ActiveWorkbook.FollowHyperlink _
+    Address:=query & name, _
+    NewWindow:=True
+End Sub
