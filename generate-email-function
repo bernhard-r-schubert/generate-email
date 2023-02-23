@@ -1,0 +1,6 @@
+Sub EMailGenerate(email As String)
+    With EMailGenerator 'Formular auswählen
+        .EMailText.Text = email 'TextBox auswählen und befüllen
+        .Show
+    End With
+End Sub
