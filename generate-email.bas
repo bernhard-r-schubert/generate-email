@@ -1,3 +1,8 @@
+Function getParentFolder(ByVal strFolder0) 'Funktion, um übergeordneten Ordner zu bekommen
+    Dim strFolder
+    getParentFolder = Left(strFolder0, InStrRev(strFolder0, "\") - 1)
+End Function
+
 Sub EMail_Erzeugen()
 
 ''''''''''''''''''''''
@@ -82,7 +87,8 @@ Sub EMail_Erzeugen()
 
     Dim masterlist As Integer
     Dim url As String
-    
+    Dim ordnerName As String
+        
 '0.2 Variablen für Metadaten aus der Liste
 ''''''''''''''''''''''''''''''''''''''''''
 
@@ -143,6 +149,7 @@ Quelleneingabe:
     open_access_deal = Cells(masterlist, 24)
     funder = Cells(masterlist, 7)
     article_id = Cells(masterlist, 14)
+    notification_date = Cells(masterlist, 22)
     due_date = Cells(masterlist, 45)
     publisher = Cells(masterlist, 5)
     corresponding_author = Cells(masterlist, 3)
@@ -171,7 +178,10 @@ Quelleneingabe:
         affiliated = True
         Else: affiliated = False
     End If
-    
+
+
+
+
     
 '''''''''''''''''''''''''''''
 ' 1 Ablehnungen an Autor*in '
@@ -382,9 +392,9 @@ Quelleneingabe:
     
     End If
 
-'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-' 2 Rechnungslegung an Quästur und Zahlungsbestätigung an Autor*in (de Gruyter, Frontiers, MDPI, SAGE, Publikationsfonds) '
-'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+' 2 Rechnungslegung an Quästur und Zahlungsbestätigung an Autor*in (de Gruyter, Frontiers, MDPI, Publikationsfonds) '
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
 'endif siehe 2.2
 
@@ -398,12 +408,61 @@ Quelleneingabe:
                 GoTo Ende
             End If
             
-            If publisher = "de Gruyter" Then 'Ergänzung zur reduzierten Gebühren für SAGE/de Gruyter
+            Dim Rechnungspfad 'Erzeuge Pfad zum Rechnungsordner
+            Rechnungspfad = getParentFolder(ThisWorkbook.Path) & "\01 pubfonds - rechnungen, belege, screenshots"
+            
+            Dim shortened_title 'Erzeuge Kurztitel für Ordnername
+                        
+            shortened_title = title
+            
+            verboteneWerte = Array("\", "/", ":", "*", "?", "<", ">", "|") 'Entfernen von Werten, die in Ordnernamen nicht vorkommen dürfen
+            For Each wert In verboteneWerte
+                shortened_title = Replace(shortened_title, wert, "")
+            Next wert
+            
+            Dim shortened_title_array() As String
+            Dim shortened_title_elcount As Integer
+                                                            
+            shortened_title_array = Split(shortened_title, " ") 'Titel in Array (beginnt bei 0) aus Einzelelementen umwandeln
+            
+            shortened_title_elcount = UBound(shortened_title_array) 'Elemente im Array zählen, es dürfen max. 5 sein
+                        
+            If shortened_title_elcount >= 5 Then
+                shortened_title_elcount = 4
+            End If
+                        
+            shortened_title = shortened_title_array(0) 'Kurztitel beginnt mit erstem Element aus Array
+                        
+            For Iteration = 1 To shortened_title_elcount 'Kurztitel wieder aus den ersten (max.) fünf Elementen zusammenfügen
+                shortened_title = shortened_title & " " & shortened_title_array(Iteration)
+            Next
+            
+            shortened_title = Trim(shortened_title)
+            
+            ordnerName = corresponding_author & "---" & Format(notification_date, "yyyy-mm-dd") & "---" & source_full_title & "---" & shortened_title & "---INVOICED" 'Ordnername aus Elementen zusammenstellen
+            
+            Dim fs, f
+        
+            Set fs = CreateObject("Scripting.FileSystemObject") 'Prüfung, ob Ordner bereits existiert - wenn ja, Meldung, wenn nein, erzeugen
+            
+            If fs.FolderExists(Rechnungspfad & "\" & ordnerName) = True Then
+                MsgBox "Ordner existiert bereits.", vbOKOnly
+            Else
+                Set f = fs.CreateFolder(Rechnungspfad & "\" & ordnerName)
+            End If
+            
+            Set f = Nothing
+            Set fs = Nothing
+            
+            Call Shell("explorer.exe """ & Rechnungspfad & "\" & ordnerName & """", vbNormalFocus) 'Ordner öffnen
+                       
+            
+            If publisher = "de Gruyter" Then 'Ergänzung zur reduzierten Gebühren für de Gruyter
                 PriceReductionGer = " (aufgrund des Verlagsabkommens mit stark reduzierten Publikationsgebühren)"
                 PriceReductionEng = " (priced at a greatly reduced rate as part of our publishing agreement)"
-            ElseIf publisher = "SAGE" Then 'Ergänzung zur reduzierten Gebühren für SAGE/de Gruyter
-                PriceReductionGer = " (aufgrund des Verlagsabkommens mit reduzierten Publikationsgebühren)"
-                PriceReductionEng = " (priced at a reduced rate as part of our publishing agreement)"
+            'ElseIf publisher = "SAGE" Then 'Ergänzung zur reduzierten Gebühren für SAGE
+            '    PriceReductionGer = " (aufgrund des Verlagsabkommens mit reduzierten Publikationsgebühren)"
+            '    PriceReductionEng = " (priced at a reduced rate as part of our publishing agreement)"
             Else
                 PriceReductionGer = ""
                 PriceReductionEng = ""
@@ -661,7 +720,7 @@ Quelleneingabe:
             "Thank you for your notification. This article is not eligible. Reason: Corresponding author is not affiliated with the University of Vienna." & vbCrLf & vbCrLf & _
             "If you or the author have any further questions, please do not hesitate to contact us." & vbCrLf & vbCrLf & _
             "Kind regards" & vbCrLf & vbCrLf & _
-            "Guido Blechl / BErnhard Schubert / Klara Schellander"
+            "Guido Blechl / Bernhard Schubert / Klara Schellander"
             
 ' 4.2.2 Bestätigung
 '''''''''''''''''''
@@ -1037,7 +1096,7 @@ Quelleneingabe:
 ' 6.2.1 Frontiers, IOP, Wiley
 '''''''''''''''''''''''''''''
         
-        If (invoice_status = "Zusage" And publisher = "Frontiers") Or (echeck_status = "approved" And (publisher = "Wiley" Or publisher = "IOP")) Then 'Frontiers/IOP/Wiley-Autor*inneninfo
+        If (invoice_status = "Zusage" And publisher = "Frontiers") Or (echeck_status = "approved" And (publisher = "Wiley" Or publisher = "IOP") And Not open_access_deal = "no agreement") Then 'Frontiers/IOP/Wiley-Autor*inneninfo
         
             UFind corresponding_author 'Suche nach corresponding_author in u:find
             
@@ -1099,10 +1158,10 @@ Quelleneingabe:
 ' 7 Affiliation ergänzen '
 ''''''''''''''''''''''''''
 
-' 7.1 Springer, Wiley
-'''''''''''''''''''''
+' 7.1 Springer, Wiley, Frontiers
+''''''''''''''''''''''''''''''''
 
-        If (echeck_status = "pending" And (publisher = "Wiley" Or publisher = "Springer")) Then 'Springer/Wiley-Affiliation ergänzen
+        If (echeck_status = "pending" And (publisher = "Wiley" Or publisher = "Springer" Or publisher = "Frontiers")) Then 'Springer/Wiley/Frontiers-Affiliation ergänzen
         
             UFind corresponding_author 'Suche nach corresponding_author in u:find
             
