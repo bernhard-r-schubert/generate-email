@@ -1,0 +1,23 @@
+Private Sub NachUntenSpringen_Click()
+
+Dim Unten As Range
+
+With Worksheets(1).Range("A:A") 'Sucht nach leeren Values in Worksheet 1, Spalte A, nach Zeile 10
+    Set Unten = .Find("", LookIn:=xlValues, After:=.Cells(10, 1), LookAt:=xlWhole, _
+                SearchOrder:=xlByRows, SearchDirection:=xlNext) 'verändert leider die Standard-Suchsettings
+    Unten.Select
+    
+    'Suchsettings auf Default zurücksetzen, damit Suche wieder funktioniert
+    
+    Cells.Find what:="", _
+               After:=ActiveCell, _
+               LookIn:=xlFormulas, _
+               LookAt:=xlPart, _
+               SearchOrder:=xlByRows, _
+               SearchDirection:=xlNext, _
+               MatchCase:=False, _
+               SearchFormat:=False
+        
+End With
+
+End Sub
