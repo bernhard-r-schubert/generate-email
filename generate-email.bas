@@ -25,7 +25,7 @@ Sub EMail_Erzeugen()
 '1.5 EU-Ablehnung
 '1.6 Nicht affiliiert zum Stichtag
 
-'2 Rechnungslegung an Quästur und Zahlungsbestätigung an Autor*in (de Gruyter, Frontiers, MDPI, SAGE, Publikationsfonds)
+'2 Rechnungslegung an Quästur und Zahlungsbestätigung an Autor*in (de Gruyter, Frontiers, MDPI, SAGE, Publikationsfonds, Memberships)
 
 '2.1 Sofort zu zahlen
 '2.2 Nicht sofort zu zahlen
@@ -163,6 +163,7 @@ Quelleneingabe:
     echeck_status = Cells(masterlist, 30)
     reject_reason = Cells(masterlist, 31)
     invoice_status = Cells(masterlist, 42)
+    qflow_date = Cells(masterlist, 44)
     InvoiceNr = Cells(masterlist, 51)
     euro = -1 * (Val(Cells(masterlist, 50)))
     If Cells(masterlist, 11) = "YES" Then
@@ -293,7 +294,7 @@ Quelleneingabe:
 
 'endif siehe 1.6
 
-    If (publisher = "Frontiers" Or publisher = "ACS" Or publisher = "IOP" Or publisher = "T&F" Or publisher = "Elsevier" Or publisher = "OUP" Or publisher = "CUP" Or publisher = "Wiley" Or publisher = "Springer" Or publisher = "BMC" Or publisher = "MDPI" Or (publisher = "SAGE" And open_access_deal = "gold agreement")) And (reject_reason = "FWF funded" Or reject_reason = "EU funded" Or reject_reason = "author not affiliated at relevant date") Then 'Frontiers-/ACS-/IOP-/MDPI-/T&F-/Elsevier-/OUP-Ablehungsemails
+    If (publisher = "Frontiers" Or publisher = "ACS" Or publisher = "IOP" Or publisher = "T&F" Or publisher = "Elsevier" Or publisher = "OUP" Or publisher = "CUP" Or publisher = "Wiley" Or publisher = "Springer" Or publisher = "BMC" Or publisher = "MDPI" Or publisher = "SAGE") And (reject_reason = "FWF funded" Or reject_reason = "EU funded" Or reject_reason = "author not affiliated at relevant date") Then 'Frontiers-/ACS-/IOP-/MDPI-/T&F-/Elsevier-/OUP-/SAGE-Ablehungsemails
        
        RejectionHeaderGer = "Förderabsage"
        RejectionHeaderEng = "Funding declined for"
@@ -345,7 +346,7 @@ Quelleneingabe:
         ElseIf affiliated = False Then
             PaymentOrApprovalGer = "Bestätigung im Rahmen unseres Verlagsabkommens"
             PaymentOrApprovalEng = "approve under our publishing agreement"
-            If (publisher = "ACS" Or publisher = "IOP" Or publisher = "T&F" Or publisher = "OUP" Or publisher = "Wiley" Or publisher = "Springer" Or (publisher = "SAGE" And open_access_deal = "gold agreement")) Then 'Relevanter Zeitpunkt ist acceptance
+            If (publisher = "ACS" Or publisher = "IOP" Or publisher = "T&F" Or publisher = "OUP" Or publisher = "Wiley" Or publisher = "Springer" Or publisher = "SAGE") Then 'Relevanter Zeitpunkt ist acceptance
                 If publisher = "T&F" Then
                     'RejectionReasonGer = "Leider können wir Ihre Publikation nicht fördern, da Sie zum Zeitpunkt der Acceptance nicht Angehörige*r der Universität Wien waren und seitens der Universität deshalb keine Förderung möglich ist (siehe https://openaccess.univie.ac.at/taylor-francis)."
                     'RejectionReasonEng = "Unfortunately we cannot cover the charges since you were not affiliated with the University of Vienna at the date of acceptance and the University cannot provide funding in this case (see https://openaccess.univie.ac.at/en/taylor-francis)."
@@ -412,8 +413,12 @@ Quelleneingabe:
             Rechnungspfad = getParentFolder(ThisWorkbook.Path) & "\01 pubfonds - rechnungen, belege, screenshots"
             
             Dim shortened_title 'Erzeuge Kurztitel für Ordnername
-                        
-            shortened_title = title
+            
+            If type_of_charge = "Membership" Then
+                shortened_title = type_of_charge 'für Memberships
+            Else
+                shortened_title = title
+            End If
             
             verboteneWerte = Array("\", "/", ":", "*", "?", "<", ">", "|") 'Entfernen von Werten, die in Ordnernamen nicht vorkommen dürfen
             For Each wert In verboteneWerte
@@ -439,7 +444,11 @@ Quelleneingabe:
             
             shortened_title = Trim(shortened_title)
             
-            ordnerName = corresponding_author & "---" & Format(notification_date, "yyyy-mm-dd") & "---" & source_full_title & "---" & shortened_title & "---INVOICED" 'Ordnername aus Elementen zusammenstellen
+            If shortened_title = "Membership" Then
+                ordnerName = publisher & "---" & Format(qflow_date, "yyyy-mm-dd") & "---" & shortened_title & "---" & InvoiceNr & "---INVOICED" 'Ordnername für Memberships aus Elementen zusammenstellen
+            Else:
+                ordnerName = corresponding_author & "---" & Format(notification_date, "yyyy-mm-dd") & "---" & source_full_title & "---" & shortened_title & "---INVOICED" 'Ordnername aus Elementen zusammenstellen
+            End If
             
             Dim fs, f
         
@@ -489,9 +498,8 @@ Quelleneingabe:
                 
                 If corresponding_author <> "" Then 'Falls es sich um Membership oder OA Support handelt gibt es keine Bestätigung an corresponding authors
                 
-                
                     UFind corresponding_author 'Suche nach corresponding_author in u:find
-                
+
                 'Zahlungsbestätigung, sofort zu zahlen, deutsch
                 
                     EMailGenerate "Rechnung in Zahlung (" & title & ")" & vbCrLf & vbCrLf & _
